@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>新店高中｜歷屆升學經驗分享</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Google Fonts：Noto Serif TC 作標題、Noto Sans TC 作內文 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#F3F4F0',
+          surface: '#FFFFFF',
+          ink: '#3B3F3E',
+          inksoft: '#7C837F',
+          border: '#E3E4DE',
+          primary: { DEFAULT: '#7C93A3', dark: '#526D7D', soft: '#E7EDF0' },
+          star:    { DEFAULT: '#8FA07C', soft: '#EAEFE3', text: '#4F6142' },
+          apply:   { DEFAULT: '#C69A6C', soft: '#F5EBDD', text: '#8A6435' },
+        },
+        fontFamily: {
+          serif: ['"Noto Serif TC"', 'serif'],
+          sans: ['"Noto Sans TC"', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  html, body { background:#F3F4F0; font-family:'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; line-height:1.8; letter-spacing:0.02em; -webkit-text-size-adjust:100%; }
+  h1,h2,h3,.font-serif-forced { font-family:'Noto Serif TC', serif; letter-spacing:0.01em; }
+  input, select, button { letter-spacing:0.02em; }
+
+  /* ---- 登入畫面 ---- */
+  #loginScreen { transition: opacity .35s ease; }
+  #loginScreen.fade-out { opacity:0; pointer-events:none; }
+
+  /* ---- Loading skeleton ---- */
+  .skeleton { background: linear-gradient(90deg, #ECEDE8 25%, #F5F6F2 37%, #ECEDE8 63%); background-size: 400% 100%; animation: skeleton-loading 1.4s ease infinite; }
+  @keyframes skeleton-loading { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+  /* ---- 卡片 ---- */
+  .exp-card { background:#fff; border:1px solid #E3E4DE; border-radius: 18px; }
+
+  /* ---- Tabs ---- */
+  .tab-btn { position: relative; color:#7C837F; transition: color .2s ease; }
+  .tab-btn.active { color:#526D7D; }
+  .tab-btn.active::after {
+    content:''; position:absolute; left:10%; right:10%; bottom:-1px; height:2px; background:#7C93A3; border-radius:2px;
+  }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from{ opacity:0; transform:translateY(3px);} to{ opacity:1; transform:translateY(0);} }
+
+  /* ---- 展開/收合文字 ---- */
+  .clampable { display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; line-height:1.85; }
+  .clampable.expanded { display:block; -webkit-line-clamp:unset; }
+
+  /* ---- 成績格 ---- */
+  .grade-box { background:#F3F4F0; border-radius:10px; }
+
+  /* 隱藏 select 預設樣式後自訂箭頭 */
+  select.custom-select {
+    -webkit-appearance:none; appearance:none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237C837F' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 0.7rem center; background-size:14px;
+  }
+
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:#D3D6CE; border-radius:10px; }
+
+  .spinner-cap { animation: capBounce 1.1s ease-in-out infinite; }
+  @keyframes capBounce { 0%,100%{ transform:translateY(0) rotate(-4deg); } 50%{ transform:translateY(-8px) rotate(4deg); } }
+</style>
+</head>
+
+<body class="min-h-screen bg-bg text-ink">
+
+  <!-- ============ 登入畫面 ============ -->
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-bg px-6">
+    <div class="w-full max-w-xs">
+      <div class="flex flex-col items-center text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-primary-soft flex items-center justify-center mb-4">
+          <i class="fa-solid fa-graduation-cap text-2xl text-primary-dark"></i>
+        </div>
+        <h1 class="text-xl font-semibold text-ink">歷屆升學經驗分享</h1>
+        <p class="text-sm text-inksoft mt-1">新店高中 · 學長姐備審與面試資料庫</p>
+      </div>
+
+      <form id="loginForm" class="space-y-3">
+        <div>
+          <label for="pwInput" class="sr-only">通關密碼</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-inksoft text-sm"></i>
+            <input id="pwInput" type="password" placeholder="請輸入通關密碼" autocomplete="off"
+              class="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white text-ink placeholder:text-inksoft/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+          </div>
+        </div>
+        <p id="pwError" class="text-sm text-rose-500 hidden px-1">密碼不正確，請再確認一次。</p>
+        <button type="submit"
+          class="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark active:scale-[0.98] transition">
+          進入查詢系統
+        </button>
+      </form>
+      <p class="text-xs text-inksoft text-center mt-6">僅供本校學生升學備審使用，請勿外流</p>
+    </div>
+  </div>
+
+  <!-- ============ 主畫面 ============ -->
+  <div id="mainScreen" class="hidden min-h-screen">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-bg/90 backdrop-blur border-b border-border">
+      <div class="max-w-2xl mx-auto px-4 pt-5 pb-4">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-9 h-9 rounded-xl bg-primary-soft flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-graduation-cap text-primary-dark text-sm"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-semibold leading-tight">歷屆升學經驗分享</h1>
+            <p class="text-xs text-inksoft leading-tight">學長姐的路，給你參考</p>
+          </div>
+        </div>
+
+        <!-- 搜尋框 -->
+        <div class="relative mb-3">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-inksoft text-sm"></i>
+          <input id="searchInput" type="text" placeholder="搜尋學校、學群或科系全名，例如：政治大學/第一類學群/資訊"
+            class="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white text-sm placeholder:text-inksoft/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+        </div>
+
+        <!-- 篩選 -->
+        <div class="grid grid-cols-2 gap-3">
+          <select id="filterChannel" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">全部入學管道</option>
+          </select>
+          <select id="filterYear" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">全部畢業學年度</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 py-5">
+      <p id="resultCount" class="text-xs text-inksoft mb-3 px-1"></p>
+      <div id="cardList" class="flex flex-col gap-4"></div>
+
+      <!-- 無結果 -->
+      <div id="emptyState" class="hidden flex-col items-center text-center py-20">
+        <i class="fa-regular fa-face-meh text-4xl text-inksoft/60 mb-3"></i>
+        <p class="text-sm text-inksoft">找不到符合條件的資料</p>
+        <p class="text-xs text-inksoft/70 mt-1">試試看調整關鍵字或篩選條件</p>
+      </div>
+
+      <!-- 錯誤狀態 -->
+      <div id="errorState" class="hidden flex-col items-center text-center py-20">
+        <i class="fa-solid fa-triangle-exclamation text-4xl text-apply mb-3"></i>
+        <p class="text-sm text-inksoft mb-4">資料載入失敗，請檢查網路連線</p>
+        <button id="retryBtn" class="px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition">重新載入</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ Loading 畫面 ============ -->
+  <div id="loadingScreen" class="hidden fixed inset-0 z-40 bg-bg flex flex-col items-center justify-center px-6">
+    <i class="fa-solid fa-graduation-cap text-4xl text-primary spinner-cap mb-4"></i>
+    <p class="text-sm text-inksoft mb-8">資料整理中，請稍候…</p>
+    <div class="w-full max-w-xs space-y-3">
+      <div class="skeleton h-28 rounded-2xl"></div>
+      <div class="skeleton h-28 rounded-2xl"></div>
+      <div class="skeleton h-28 rounded-2xl"></div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbwtK-tRpKysyOX_L7tR5rc-KjzKsbM3hQRPONDQEcFnRD5llE7lUJ9ntuIgp9O_ahCP/exec";
+  const PASSWORD = "htsh2026";
+
+  // ---- 欄位鍵值（完全對應資料來源） ----
+  const K = {
+    channel: "入學管道",
+    year: "畢業學年度",
+    school: "學校(全名)",
+    group: "學群",
+    department: "科系(全名)",
+    rank: "校排百分比(％)",
+    chinese: "國文",
+    english: "英文",
+    mathA: "數A",
+    mathB: "數B",
+    social: "社會",
+    science: "自然",
+    starReason: "何時開始以及如何認為自己適合用繁星推薦上大學？",
+    studyMethod: "請分享自己努力的過程、讀書方法：",
+    timePlan: "在時間規劃上，如何分配自己的唸書／休閒？",
+    interviewFormat: "面試方式 (詳細、具體說明ex.個別or團體or跑關；幾位教授對幾位學生)",
+    interviewQuestions: "面試題目 (詳細、具體說明並請分享供學弟妹參考的回應方式)",
+    others: "其他項目 （請詳述具體方式及題目、時間、占分百分比",
+    wordsForJuniors: "給學弟妹的話",
+    contact: "聯繫方式",
+  };
+
+  const GRADE_FIELDS = [
+    { key: K.chinese, label: "國文" },
+    { key: K.english, label: "英文" },
+    { key: K.mathA,   label: "數A" },
+    { key: K.mathB,   label: "數B" },
+    { key: K.social,  label: "社會" },
+    { key: K.science, label: "自然" },
+  ];
+
+  let rawData = [];
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const loginScreen = $("loginScreen");
+  const loginForm = $("loginForm");
+  const pwInput = $("pwInput");
+  const pwError = $("pwError");
+  const mainScreen = $("mainScreen");
+  const loadingScreen = $("loadingScreen");
+  const cardList = $("cardList");
+  const emptyState = $("emptyState");
+  const errorState = $("errorState");
+  const resultCount = $("resultCount");
+  const searchInput = $("searchInput");
+  const filterChannel = $("filterChannel");
+  const filterYear = $("filterYear");
+  const retryBtn = $("retryBtn");
+
+  // ---------- 工具 ----------
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/\n/g, "<br>");
+  }
+
+  function isEmpty(v) {
+    return v === null || v === undefined || String(v).trim() === "";
+  }
+
+  function val(item, key) {
+    const v = item[key];
+    return isEmpty(v) ? "" : String(v).trim();
+  }
+
+  // ---------- 登入 ----------
+  loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (pwInput.value === PASSWORD) {
+      pwError.classList.add("hidden");
+      sessionStorage.setItem("xdsh_auth", "1");
+      enterApp();
+    } else {
+      pwError.classList.remove("hidden");
+      pwInput.classList.add("ring-2", "ring-rose-300");
+      pwInput.focus();
+      pwInput.select();
+    }
+  });
+
+  function enterApp() {
+    loginScreen.classList.add("fade-out");
+    setTimeout(() => { loginScreen.classList.add("hidden"); }, 350);
+    mainScreen.classList.remove("hidden");
+    loadData();
+  }
+
+  if (sessionStorage.getItem("xdsh_auth") === "1") {
+    loginScreen.classList.add("hidden");
+    mainScreen.classList.remove("hidden");
+    loadData();
+  }
+
+  // ---------- 資料載入 ----------
+  function loadData() {
+    loadingScreen.classList.remove("hidden");
+    loadingScreen.classList.add("flex");
+    errorState.classList.add("hidden");
+    errorState.classList.remove("flex");
+
+    fetch(API_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        rawData = Array.isArray(data) ? data : (data.data || []);
+        buildFilterOptions(rawData);
+        renderList(rawData);
+        loadingScreen.classList.add("hidden");
+        loadingScreen.classList.remove("flex");
+      })
+      .catch(() => {
+        loadingScreen.classList.add("hidden");
+        loadingScreen.classList.remove("flex");
+        errorState.classList.remove("hidden");
+        errorState.classList.add("flex");
+      });
+  }
+  retryBtn.addEventListener("click", loadData);
+
+  // ---------- 篩選選單 ----------
+  function buildFilterOptions(data) {
+    const channels = new Set();
+    const years = new Set();
+    data.forEach((item) => {
+      const c = val(item, K.channel);
+      const y = val(item, K.year);
+      if (c) channels.add(c);
+      if (y) years.add(y);
+    });
+
+    fillSelect(filterChannel, Array.from(channels).sort(), "全部入學管道");
+    fillSelect(filterYear, Array.from(years).sort().reverse(), "全部畢業學年度");
+  }
+
+  function fillSelect(selectEl, options, placeholder) {
+    selectEl.innerHTML = `<option value="">${placeholder}</option>` +
+      options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+  }
+
+  // ---------- 徽章樣式 ----------
+  function channelBadgeClass(channel) {
+    if (channel.indexOf("繁星") !== -1) return "bg-star-soft text-star-text";
+    if (channel.indexOf("申請") !== -1) return "bg-apply-soft text-apply-text";
+    return "bg-primary-soft text-primary-dark";
+  }
+
+  // ---------- 搜尋 / 篩選 ----------
+  let searchTimer = null;
+  function scheduleFilter() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFilters, 120);
+  }
+  searchInput.addEventListener("input", scheduleFilter);
+  filterChannel.addEventListener("change", applyFilters);
+  filterYear.addEventListener("change", applyFilters);
+
+  function applyFilters() {
+    const kw = searchInput.value.trim().toLowerCase();
+    const ch = filterChannel.value;
+    const yr = filterYear.value;
+
+    const filtered = rawData.filter((item) => {
+      const school = val(item, K.school).toLowerCase();
+      const group = val(item, K.group).toLowerCase();
+      const department = val(item, K.department).toLowerCase();
+      const matchKw = !kw || school.indexOf(kw) !== -1 || group.indexOf(kw) !== -1 || department.indexOf(kw) !== -1;
+      const matchCh = !ch || val(item, K.channel) === ch;
+      const matchYr = !yr || val(item, K.year) === yr;
+      return matchKw && matchCh && matchYr;
+    });
+
+    renderList(filtered);
+  }
+
+  // ---------- 卡片區塊 ----------
+  function buildSection(title, colorClass, fields) {
+    const rows = fields
+      .filter((f) => !isEmpty(f.value))
+      .map((f) => `
+        <div class="mb-3 last:mb-0">
+          <p class="text-xs font-medium text-inksoft mb-1.5 tracking-wide">${escapeHtml(f.label)}</p>
+          <p class="text-sm text-ink leading-relaxed clampable">${escapeHtml(f.value)}</p>
+          <button class="expand-btn text-xs text-primary-dark mt-1 font-medium hidden">展開全文</button>
+        </div>`)
+      .join("");
+
+    if (!rows) {
+      return `<div class="rounded-xl ${colorClass} p-4 text-sm text-inksoft">此區暫無資料</div>`;
+    }
+    return `<div class="rounded-xl ${colorClass} p-4">${rows}</div>`;
+  }
+
+  function renderGrades(item) {
+    const gradeCells = GRADE_FIELDS.map((g) => {
+      const v = val(item, g.key);
+      return `
+        <div class="grade-box py-2.5 text-center">
+          <p class="text-xs text-inksoft mb-1 tracking-wide">${g.label}</p>
+          <p class="text-sm font-semibold text-ink">${v ? escapeHtml(v) : "-"}</p>
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="mt-4">
+        <div class="grid grid-cols-3 gap-2.5">${gradeCells}</div>
+      </div>`;
+  }
+
+  function renderCard(item, idx) {
+    const school = val(item, K.school) || "校系未提供";
+    const groupRaw = val(item, K.group);
+    const group = groupRaw ? groupRaw + "學群" : "";
+    const department = val(item, K.department) || "未提供科系";
+    const channel = val(item, K.channel) || "未提供";
+    const year = val(item, K.year);
+    const rank = val(item, K.rank);
+    const isApply = channel.indexOf("申請") !== -1;
+
+    const badges = `
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${channelBadgeClass(channel)}">${escapeHtml(channel)}</span>
+      ${year ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-bg text-inksoft border border-border">${escapeHtml(year)}</span>` : ""}
+      ${rank ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-star-soft text-star-text"><i class="fa-solid fa-ranking-star mr-1"></i>校排 ${escapeHtml(rank)}％</span>` : ""}
+    `;
+
+    const prepSection = buildSection("備考心得", "bg-star-soft/50", [
+      { label: "與繁星的契機", value: val(item, K.starReason) },
+      { label: "努力過程與讀書方法", value: val(item, K.studyMethod) },
+      { label: "時間分配", value: val(item, K.timePlan) },
+    ]);
+
+    const interviewSection = buildSection("面試詳情", "bg-primary-soft/50", [
+      { label: "面試方式", value: val(item, K.interviewFormat) },
+      { label: "面試題目", value: val(item, K.interviewQuestions) },
+      { label: "其他項目", value: val(item, K.others) },
+    ]);
+
+    const wordsSection = buildSection("給學弟妹的話", "bg-apply-soft/50", [
+      { label: "叮嚀與建議", value: val(item, K.wordsForJuniors) },
+      { label: "聯繫方式", value: val(item, K.contact) },
+    ]);
+
+    return `
+      <article class="exp-card p-5" data-idx="${idx}">
+        <div class="flex flex-wrap gap-1.5 mb-2.5">${badges}</div>
+        <h3 class="text-lg font-semibold text-ink leading-snug">${escapeHtml(school)}</h3>
+        ${group ? `<p class="text-xs text-primary-dark font-medium mt-1">${escapeHtml(group)}</p>` : ""}
+        <p class="text-sm text-inksoft mt-0.5">${escapeHtml(department)}</p>
+
+        ${isApply ? "" : renderGrades(item)}
+
+        <div class="mt-4 border-t border-border pt-3">
+          <div class="flex gap-4 border-b border-border mb-3">
+            <button class="tab-btn active pb-2 text-sm font-medium" data-tab="prep">備考心得</button>
+            <button class="tab-btn pb-2 text-sm font-medium" data-tab="interview">面試詳情</button>
+            <button class="tab-btn pb-2 text-sm font-medium" data-tab="words">給學弟妹的話</button>
+          </div>
+          <div class="tab-panel active" data-panel="prep">${prepSection}</div>
+          <div class="tab-panel" data-panel="interview">${interviewSection}</div>
+          <div class="tab-panel" data-panel="words">${wordsSection}</div>
+        </div>
+      </article>`;
+  }
+
+  function renderList(list) {
+    if (!list.length) {
+      cardList.innerHTML = "";
+      emptyState.classList.remove("hidden");
+      emptyState.classList.add("flex");
+      resultCount.textContent = "";
+      return;
+    }
+    emptyState.classList.add("hidden");
+    emptyState.classList.remove("flex");
+    resultCount.textContent = `共 ${list.length} 筆分享`;
+    cardList.innerHTML = list.map(renderCard).join("");
+    setupClampButtons();
+  }
+
+  // ---------- 展開/收合長文 ----------
+  function setupClampButtons() {
+    document.querySelectorAll(".clampable").forEach((p) => {
+      // 等排版完成後再判斷是否超出 4 行
+      requestAnimationFrame(() => {
+        if (p.scrollHeight > p.clientHeight + 2) {
+          const btn = p.nextElementSibling;
+          if (btn && btn.classList.contains("expand-btn")) {
+            btn.classList.remove("hidden");
+          }
+        }
+      });
+    });
+  }
+
+  // ---------- 事件委派：Tab 切換 + 展開/收合 ----------
+  cardList.addEventListener("click", function (e) {
+    const tabBtn = e.target.closest(".tab-btn");
+    if (tabBtn) {
+      const card = tabBtn.closest(".exp-card");
+      card.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      card.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      tabBtn.classList.add("active");
+      card.querySelector(`.tab-panel[data-panel="${tabBtn.dataset.tab}"]`).classList.add("active");
+      return;
+    }
+
+    const expandBtn = e.target.closest(".expand-btn");
+    if (expandBtn) {
+      const textEl = expandBtn.previousElementSibling;
+      const nowExpanded = textEl.classList.toggle("expanded");
+      expandBtn.textContent = nowExpanded ? "收合" : "展開全文";
+    }
+  });
+})();
+</script>
+</body>
+</html>
