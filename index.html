@@ -144,8 +144,8 @@
           <select id="filterChannel" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
             <option value="">全部入學管道</option>
           </select>
-          <select id="filterYear" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
-            <option value="">全部畢業學年度</option>
+          <select id="filterGroup" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">全部學群</option>
           </select>
         </div>
       </div>
@@ -195,6 +195,8 @@
     year: "畢業學年度",
     school: "學校(全名)",
     group: "學群",
+    groupCategory: "學群分類",
+    starGroup: "繁星學群",
     department: "科系(全名)",
     rank: "校排百分比(％)",
     chinese: "國文",
@@ -222,6 +224,14 @@
     { key: K.science, label: "自然" },
   ];
 
+  // 大學十八學群（固定選項，供「學群分類」篩選使用）
+  const GROUP_CATEGORIES = [
+    "資訊學群", "工程學群", "數理化學群", "醫藥衛生學群", "生命科學學群",
+    "生物資源學群", "地球與環境學群", "建築與設計學群", "藝術學群",
+    "社會與心理學群", "大眾傳播學群", "外語學群", "文史哲學群",
+    "教育學群", "法政學群", "管理學群", "財經學群", "遊憩與運動學群",
+  ];
+
   let rawData = [];
 
   // ---------- DOM ----------
@@ -238,7 +248,7 @@
   const resultCount = $("resultCount");
   const searchInput = $("searchInput");
   const filterChannel = $("filterChannel");
-  const filterYear = $("filterYear");
+  const filterGroup = $("filterGroup");
   const retryBtn = $("retryBtn");
 
   // ---------- 工具 ----------
@@ -267,7 +277,7 @@
     e.preventDefault();
     if (pwInput.value === PASSWORD) {
       pwError.classList.add("hidden");
-      sessionStorage.setItem("xdsh_auth", "1");
+      try { sessionStorage.setItem("xdsh_auth", "1"); } catch (err) { /* 部分預覽環境會擋掉儲存空間，忽略即可 */ }
       enterApp();
     } else {
       pwError.classList.remove("hidden");
@@ -284,7 +294,9 @@
     loadData();
   }
 
-  if (sessionStorage.getItem("xdsh_auth") === "1") {
+  let alreadyAuthed = false;
+  try { alreadyAuthed = sessionStorage.getItem("xdsh_auth") === "1"; } catch (err) { alreadyAuthed = false; }
+  if (alreadyAuthed) {
     loginScreen.classList.add("hidden");
     mainScreen.classList.remove("hidden");
     loadData();
@@ -363,17 +375,17 @@
   // ---------- 篩選選單 ----------
   function buildFilterOptions(data) {
     const channels = new Set();
-    const years = new Set();
     data.forEach((item) => {
       const c = val(item, K.channel);
-      const y = val(item, K.year);
       if (c) channels.add(c);
-      if (y) years.add(y);
     });
-
     fillSelect(filterChannel, Array.from(channels).sort(), "全部入學管道");
-    fillSelect(filterYear, Array.from(years).sort().reverse(), "全部畢業學年度");
   }
+
+  function populateGroupFilter() {
+    fillSelect(filterGroup, GROUP_CATEGORIES, "全部學群");
+  }
+  populateGroupFilter();
 
   function fillSelect(selectEl, options, placeholder) {
     selectEl.innerHTML = `<option value="">${placeholder}</option>` +
@@ -395,21 +407,24 @@
   }
   searchInput.addEventListener("input", scheduleFilter);
   filterChannel.addEventListener("change", applyFilters);
-  filterYear.addEventListener("change", applyFilters);
+  filterGroup.addEventListener("change", applyFilters);
 
   function applyFilters() {
     const kw = searchInput.value.trim().toLowerCase();
     const ch = filterChannel.value;
-    const yr = filterYear.value;
+    const grp = filterGroup.value;
 
     const filtered = rawData.filter((item) => {
       const school = val(item, K.school).toLowerCase();
       const group = val(item, K.group).toLowerCase();
+      const groupCategory = val(item, K.groupCategory).toLowerCase();
       const department = val(item, K.department).toLowerCase();
-      const matchKw = !kw || school.indexOf(kw) !== -1 || group.indexOf(kw) !== -1 || department.indexOf(kw) !== -1;
+      const matchKw = !kw || school.indexOf(kw) !== -1 || group.indexOf(kw) !== -1 ||
+        groupCategory.indexOf(kw) !== -1 || department.indexOf(kw) !== -1;
       const matchCh = !ch || val(item, K.channel) === ch;
-      const matchYr = !yr || val(item, K.year) === yr;
-      return matchKw && matchCh && matchYr;
+      // 學群分類欄位可能為多重學群（例如 "資訊學群,管理學群"），採用「包含」比對而非完全相等
+      const matchGrp = !grp || val(item, K.groupCategory).indexOf(grp) !== -1;
+      return matchKw && matchCh && matchGrp;
     });
 
     renderList(filtered);
@@ -451,13 +466,37 @@
 
   function renderCard(item, idx) {
     const school = val(item, K.school) || "校系未提供";
-    const groupRaw = val(item, K.group);
-    const group = groupRaw ? groupRaw + "學群" : "";
     const department = val(item, K.department) || "未提供科系";
     const channel = val(item, K.channel) || "未提供";
     const year = val(item, K.year);
     const rank = val(item, K.rank);
     const isApply = channel.indexOf("申請") !== -1;
+
+    // 學群分類（可能為多重學群，例如 "資訊學群,管理學群"）與繁星學群標籤
+    const groupCategoryRaw = val(item, K.groupCategory);
+    const groupCategories = groupCategoryRaw
+      ? groupCategoryRaw.split(/[,，、\/]/).map((s) => s.trim()).filter(Boolean)
+      : [];
+    const starGroup = val(item, K.starGroup);
+
+    const groupTagsHtml = groupCategories
+      .map((g) => `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-primary-soft text-primary-dark">${escapeHtml(g)}</span>`)
+      .join("");
+    const starGroupTagHtml = starGroup
+      ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-star-soft text-star-text">${escapeHtml(starGroup)}</span>`
+      : "";
+    const groupInfoHtml = (groupTagsHtml || starGroupTagHtml)
+      ? `<div class="flex flex-wrap gap-1.5 mt-1.5">${groupTagsHtml}${starGroupTagHtml}</div>`
+      : "";
+
+    // 聯絡學長姐提示區塊：僅當「聯繫方式」欄位值恰為「可洽輔導室」時顯示
+    const contactRaw = val(item, K.contact);
+    const showContactHint = contactRaw === "可洽輔導室";
+    const contactHintHtml = showContactHint ? `
+      <div class="mt-4 flex items-start gap-2.5 rounded-xl bg-primary-soft border border-primary/20 px-4 py-3">
+        <span class="text-base leading-none">💡</span>
+        <p class="text-sm text-primary-dark leading-relaxed">這位學長姐有留下聯絡方式！若想進一步請教，請記下此校系與學年度，至輔導室查詢。</p>
+      </div>` : "";
 
     const badges = `
       <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${channelBadgeClass(channel)}">${escapeHtml(channel)}</span>
@@ -486,8 +525,8 @@
       <article class="exp-card p-5" data-idx="${idx}">
         <div class="flex flex-wrap gap-1.5 mb-2.5">${badges}</div>
         <h3 class="text-lg font-semibold text-ink leading-snug">${escapeHtml(school)}</h3>
-        ${group ? `<p class="text-xs text-primary-dark font-medium mt-1">${escapeHtml(group)}</p>` : ""}
-        <p class="text-sm text-inksoft mt-0.5">${escapeHtml(department)}</p>
+        ${groupInfoHtml}
+        <p class="text-sm text-inksoft mt-1.5">${escapeHtml(department)}</p>
 
         ${isApply ? "" : renderGrades(item)}
 
@@ -501,6 +540,7 @@
           <div class="tab-panel" data-panel="interview">${interviewSection}</div>
           <div class="tab-panel" data-panel="words">${wordsSection}</div>
         </div>
+        ${contactHintHtml}
       </article>`;
   }
 
