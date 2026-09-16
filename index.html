@@ -472,7 +472,7 @@
     const rank = val(item, K.rank);
     const isApply = channel.indexOf("申請") !== -1;
 
-    // 學群分類（可能為多重學群，例如 "資訊學群,管理學群"）與繁星學群標籤
+    // 學群分類（不含「學群」字樣，可能為多重分類，例如 "資訊,管理"）與繁星學群標籤
     const groupCategoryRaw = val(item, K.groupCategory);
     const groupCategories = groupCategoryRaw
       ? groupCategoryRaw.split(/[,，、\/]/).map((s) => s.trim()).filter(Boolean)
@@ -489,13 +489,13 @@
       ? `<div class="flex flex-wrap gap-1.5 mt-1.5">${groupTagsHtml}${starGroupTagHtml}</div>`
       : "";
 
-    // 聯絡學長姐提示區塊：僅當「聯繫方式」欄位值恰為「可洽輔導室」時顯示
+    // 聯絡學長姐提示區塊：僅當「聯繫方式」欄位值恰為「請洽輔導室」時顯示
     const contactRaw = val(item, K.contact);
-    const showContactHint = contactRaw === "可洽輔導室";
+    const showContactHint = contactRaw === "請洽輔導室";
     const contactHintHtml = showContactHint ? `
       <div class="mt-4 flex items-start gap-2.5 rounded-xl bg-primary-soft border border-primary/20 px-4 py-3">
         <span class="text-base leading-none">💡</span>
-        <p class="text-sm text-primary-dark leading-relaxed">這位學長姐有留下聯絡方式！若想進一步請教，請記下此校系與學年度，至輔導室查詢。</p>
+        <p class="text-sm text-primary-dark leading-relaxed">這位學長姐有留下聯絡方式！若想進一步請教，請記下此科系與學年度，至輔導室查詢。</p>
       </div>` : "";
 
     const badges = `
