@@ -99,10 +99,10 @@
 
       <form id="loginForm" class="space-y-3">
         <div>
-          <label for="pwInput" class="sr-only">通關密碼</label>
+          <label for="pwInput" class="sr-only">請輸入密碼</label>
           <div class="relative">
             <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-inksoft text-sm"></i>
-            <input id="pwInput" type="password" placeholder="請輸入通關密碼" autocomplete="off"
+            <input id="pwInput" type="password" placeholder="請輸入密碼" autocomplete="off"
               class="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white text-ink placeholder:text-inksoft/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
           </div>
         </div>
@@ -111,6 +111,12 @@
           class="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark active:scale-[0.98] transition">
           進入查詢系統
         </button>
+        <a href="https://docs.google.com/document/d/1XcKeOpC3pQDJmCcWOVvZxaU5h0K7qagPPx5jES7zgR0/edit?usp=sharing"
+          target="_blank" rel="noopener noreferrer"
+          class="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-primary/30 bg-primary-soft text-primary-dark text-sm font-medium hover:bg-primary/15 active:scale-[0.98] transition">
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          請用學校帳號登入此頁面查閱密碼
+        </a>
       </form>
       <p class="text-xs text-inksoft text-center mt-6">僅供本校學生升學備審使用，請勿外流</p>
     </div>
@@ -194,7 +200,7 @@
     channel: "入學管道",
     year: "畢業學年度",
     school: "學校(全名)",
-    group: "繁星學群",
+    group: "學群",
     groupCategory: "學群分類",
     starGroup: "繁星學群",
     department: "科系(全名)",
