@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -154,6 +154,16 @@
             <option value="">全部學群</option>
           </select>
         </div>
+
+        <!-- 繁星推薦專屬篩選（僅在入學管道選擇「繁星推薦」時顯示） -->
+        <div id="starFilterRow" class="hidden grid-cols-2 gap-3 mt-3">
+          <select id="filterStarType" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">全部類群</option>
+          </select>
+          <select id="filterRankRange" class="custom-select w-full py-2.5 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">全部區間</option>
+          </select>
+        </div>
       </div>
     </header>
 
@@ -238,6 +248,22 @@
     "教育", "法政", "管理", "財經", "遊憩與運動",
   ];
 
+  // 繁星類群（固定選項，供繁星推薦專屬篩選使用）
+  const STAR_TYPES = [
+    "第一類學群", "第二類學群", "第三類學群", "第四類學群",
+    "第五類學群", "第六類學群", "第七類學群", "第八類學群",
+  ];
+
+  // 校排區間（固定選項，value 用於篩選判斷，label 用於畫面顯示）
+  const RANK_RANGES = [
+    { label: "1-10%",  value: "1-10" },
+    { label: "11-20%", value: "11-20" },
+    { label: "21-30%", value: "21-30" },
+    { label: "31-40%", value: "31-40" },
+    { label: "41-50%", value: "41-50" },
+    { label: "51%以上", value: "51+" },
+  ];
+
   let rawData = [];
 
   // ---------- DOM ----------
@@ -255,6 +281,9 @@
   const searchInput = $("searchInput");
   const filterChannel = $("filterChannel");
   const filterGroup = $("filterGroup");
+  const starFilterRow = $("starFilterRow");
+  const filterStarType = $("filterStarType");
+  const filterRankRange = $("filterRankRange");
   const retryBtn = $("retryBtn");
 
   // ---------- 工具 ----------
@@ -393,10 +422,38 @@
   }
   populateGroupFilter();
 
+  function populateStarFilters() {
+    fillSelect(filterStarType, STAR_TYPES, "全部類群");
+    filterRankRange.innerHTML = `<option value="">全部區間</option>` +
+      RANK_RANGES.map((r) => `<option value="${escapeHtml(r.value)}">${escapeHtml(r.label)}</option>`).join("");
+  }
+  populateStarFilters();
+
   function fillSelect(selectEl, options, placeholder) {
     selectEl.innerHTML = `<option value="">${placeholder}</option>` +
       options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
   }
+
+  // ---------- 依「入學管道」動態切換篩選器 ----------
+  function updateChannelDependentFilters() {
+    const isStar = filterChannel.value.indexOf("繁星") !== -1;
+    if (isStar) {
+      // 狀態 B：隱藏 18 學群分類選單，顯示繁星專屬的兩個選單
+      filterGroup.classList.add("hidden");
+      filterGroup.value = "";
+      starFilterRow.classList.remove("hidden");
+      starFilterRow.classList.add("grid");
+    } else {
+      // 狀態 A：顯示 18 學群分類選單，隱藏繁星專屬選單並重置其篩選值
+      filterGroup.classList.remove("hidden");
+      starFilterRow.classList.add("hidden");
+      starFilterRow.classList.remove("grid");
+      filterStarType.value = "";
+      filterRankRange.value = "";
+    }
+  }
+  filterChannel.addEventListener("change", updateChannelDependentFilters);
+  updateChannelDependentFilters();
 
   // ---------- 徽章樣式 ----------
   function channelBadgeClass(channel) {
@@ -414,13 +471,17 @@
   searchInput.addEventListener("input", scheduleFilter);
   filterChannel.addEventListener("change", applyFilters);
   filterGroup.addEventListener("change", applyFilters);
+  filterStarType.addEventListener("change", applyFilters);
+  filterRankRange.addEventListener("change", applyFilters);
 
   function applyFilters() {
     const kw = searchInput.value.trim().toLowerCase();
     const ch = filterChannel.value;
     const grp = filterGroup.value;
+    const starType = filterStarType.value;
+    const rankRange = filterRankRange.value;
 
-    const filtered = rawData.filter((item) => {
+    let filtered = rawData.filter((item) => {
       const school = val(item, K.school).toLowerCase();
       const group = val(item, K.group).toLowerCase();
       const groupCategory = val(item, K.groupCategory).toLowerCase();
@@ -430,10 +491,36 @@
       const matchCh = !ch || val(item, K.channel) === ch;
       // 學群分類欄位可能為多重學群（例如 "資訊學群,管理學群"），採用「包含」比對而非完全相等
       const matchGrp = !grp || val(item, K.groupCategory).indexOf(grp) !== -1;
-      return matchKw && matchCh && matchGrp;
+      // 繁星類群：單一值欄位，採完全相等比對
+      const matchStarType = !starType || val(item, K.starGroup) === starType;
+      // 校排區間：讀取「校排百分比(％)」數值，精準判斷是否落在所選區間內
+      const matchRankRange = rankInRange(val(item, K.rank), rankRange);
+      return matchKw && matchCh && matchGrp && matchStarType && matchRankRange;
     });
 
+    // 當篩選的入學管道為「繁星推薦」時，依校排百分比數字由小到大重新排序
+    if (ch.indexOf("繁星") !== -1) {
+      filtered = filtered.slice().sort((a, b) => {
+        const ra = parseFloat(val(a, K.rank));
+        const rb = parseFloat(val(b, K.rank));
+        const na = isNaN(ra) ? Infinity : ra;
+        const nb = isNaN(rb) ? Infinity : rb;
+        return na - nb;
+      });
+    }
+
     renderList(filtered);
+  }
+
+  function rankInRange(rankRaw, rangeValue) {
+    if (!rangeValue) return true;
+    const num = parseFloat(rankRaw);
+    if (isNaN(num)) return false;
+    if (rangeValue === "51+") return num >= 51;
+    const parts = rangeValue.split("-");
+    const min = parseFloat(parts[0]);
+    const max = parseFloat(parts[1]);
+    return num >= min && num <= max;
   }
 
   // ---------- 卡片區塊 ----------
@@ -504,10 +591,12 @@
         <p class="text-sm text-primary-dark leading-relaxed">這位學長姐有留下聯絡方式！若想進一步請教，請記下此科系與學年度，至輔導室查詢。</p>
       </div>` : "";
 
+    const isStarChannel = channel.indexOf("繁星") !== -1;
+
     const badges = `
       <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${channelBadgeClass(channel)}">${escapeHtml(channel)}</span>
       ${year ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-bg text-inksoft border border-border">${escapeHtml(year)}</span>` : ""}
-      ${rank ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-star-soft text-star-text"><i class="fa-solid fa-ranking-star mr-1"></i>校排 ${escapeHtml(rank)}％</span>` : ""}
+      ${(isStarChannel && rank) ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-star-soft text-star-text"><i class="fa-solid fa-ranking-star mr-1"></i>校排: ${escapeHtml(rank)}%</span>` : ""}
     `;
 
     const prepSection = buildSection("備考心得", "bg-star-soft/50", [
