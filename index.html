@@ -97,30 +97,44 @@
         <p class="text-sm text-inksoft mt-1">新店高中 · 學長姐備審與面試資料庫</p>
       </div>
 
-      <form id="loginForm" class="space-y-3">
-        <div>
-          <label for="pwInput" class="sr-only">請輸入密碼</label>
-          <div class="relative">
-            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-inksoft text-sm"></i>
-            <input id="pwInput" type="password" placeholder="請輸入密碼" autocomplete="off"
-              class="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white text-ink placeholder:text-inksoft/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
-          </div>
-        </div>
-        <p id="pwError" class="text-sm text-rose-500 hidden px-1">密碼不正確，請再確認一次。</p>
-        <button type="submit"
-          class="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark active:scale-[0.98] transition">
-          進入查詢系統
-        </button>
-        <a href="https://docs.google.com/document/d/1XcKeOpC3pQDJmCcWOVvZxaU5h0K7qagPPx5jES7zgR0/edit?usp=sharing"
-          target="_blank" rel="noopener noreferrer"
-          class="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-primary/30 bg-primary-soft text-primary-dark text-sm font-medium hover:bg-primary/15 active:scale-[0.98] transition">
-          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-          請用學校帳號登入此頁面查閱密碼
-        </a>
-      </form>
-      <p class="text-xs text-inksoft text-center mt-6">僅供本校學生升學備審使用，請勿外流</p>
+     <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-50">
+  <div class="w-full max-w-md px-6">
+    <div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+
+      <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-blue-50 flex items-center justify-center">
+        <i class="fa-solid fa-graduation-cap text-2xl text-blue-600"></i>
+      </div>
+
+      <h1 class="text-2xl font-bold text-slate-800 mb-2">
+        新店高中
+      </h1>
+
+      <h2 class="text-lg font-semibold text-slate-700 mb-3">
+        歷屆升學經驗分享
+      </h2>
+
+      <p class="text-sm text-slate-500 leading-relaxed mb-7">
+        僅限本校學生使用學校 Google 帳號登入
+      </p>
+
+      <button
+        id="googleLoginBtn"
+        type="button"
+        class="w-full flex items-center justify-center gap-3 rounded-xl bg-white border border-slate-300 px-5 py-3.5 font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+      >
+        <i class="fa-brands fa-google text-red-500"></i>
+        使用學校 Google 帳號登入
+      </button>
+
+      <p id="loginError" class="hidden mt-4 text-sm text-red-600"></p>
+
+      <p class="mt-6 text-xs text-slate-400">
+        僅供本校學生升學備審使用，請勿外流
+      </p>
+
     </div>
   </div>
+</div>
 
   <!-- ============ 主畫面 ============ -->
   <div id="mainScreen" class="hidden min-h-screen">
@@ -202,9 +216,14 @@
 (function () {
   "use strict";
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbwtK-tRpKysyOX_L7tR5rc-KjzKsbM3hQRPONDQEcFnRD5llE7lUJ9ntuIgp9O_ahCP/exec";
-  const PASSWORD = "htsh2026";
+const SUPABASE_URL = "https://joelbuusbwjlfsokxeoq.supabase.co";
 
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TL8UdNqw1MOPt-G2yJmDEA_IyH5Gz-c";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
   // ---- 欄位鍵值（完全對應資料來源） ----
   const K = {
     channel: "入學管道",
@@ -269,9 +288,8 @@
   // ---------- DOM ----------
   const $ = (id) => document.getElementById(id);
   const loginScreen = $("loginScreen");
-  const loginForm = $("loginForm");
-  const pwInput = $("pwInput");
-  const pwError = $("pwError");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+  const loginError = document.getElementById("loginError");
   const mainScreen = $("mainScreen");
   const loadingScreen = $("loadingScreen");
   const cardList = $("cardList");
@@ -307,36 +325,77 @@
     return isEmpty(v) ? "" : String(v).trim();
   }
 
-  // ---------- 登入 ----------
-  loginForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (pwInput.value === PASSWORD) {
-      pwError.classList.add("hidden");
-      try { sessionStorage.setItem("xdsh_auth", "1"); } catch (err) { /* 部分預覽環境會擋掉儲存空間，忽略即可 */ }
-      enterApp();
-    } else {
-      pwError.classList.remove("hidden");
-      pwInput.classList.add("ring-2", "ring-rose-300");
-      pwInput.focus();
-      pwInput.select();
+ // ==================== Google 登入 ====================
+
+const googleLoginBtn = document.getElementById("googleLoginBtn");
+const loginError = document.getElementById("loginError");
+
+googleLoginBtn.addEventListener("click", async () => {
+  loginError.classList.add("hidden");
+  googleLoginBtn.disabled = true;
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin
     }
   });
 
-  function enterApp() {
-    loginScreen.classList.add("fade-out");
-    setTimeout(() => { loginScreen.classList.add("hidden"); }, 350);
-    mainScreen.classList.remove("hidden");
-    loadData();
+  if (error) {
+    console.error("Google 登入失敗：", error);
+    loginError.textContent = "登入失敗，請稍後再試。";
+    loginError.classList.remove("hidden");
+    googleLoginBtn.disabled = false;
   }
+});
 
-  let alreadyAuthed = false;
-  try { alreadyAuthed = sessionStorage.getItem("xdsh_auth") === "1"; } catch (err) { alreadyAuthed = false; }
-  if (alreadyAuthed) {
+
+// ==================== 進入網站 ====================
+
+function enterApp() {
+  loginScreen.classList.add("fade-out");
+
+  setTimeout(() => {
     loginScreen.classList.add("hidden");
-    mainScreen.classList.remove("hidden");
-    loadData();
-  }
+  }, 350);
 
+  mainScreen.classList.remove("hidden");
+  loadData();
+}
+
+
+// ==================== 檢查 Supabase 登入狀態 ====================
+
+async function checkAuth() {
+  const {
+    data: { session }
+  } = await supabaseClient.auth.getSession();
+
+  if (session?.user) {
+    // 已經登入 → 直接進入網站
+    enterApp();
+  } else {
+    // 尚未登入 → 顯示登入畫面
+    loginScreen.classList.remove("hidden");
+    mainScreen.classList.add("hidden");
+  }
+}
+
+
+// ==================== 監聽登入狀態變化 ====================
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (session?.user) {
+    enterApp();
+  } else if (event === "SIGNED_OUT") {
+    mainScreen.classList.add("hidden");
+    loginScreen.classList.remove("hidden");
+  }
+});
+
+
+// 啟動時檢查登入狀態
+checkAuth();
   // ---------- 本地快取（讓已載入過的手機下次能秒開） ----------
   const CACHE_KEY = "xdsh_data_cache_v1";
 
