@@ -438,32 +438,76 @@ checkAuth();
     }
   }
 
-  function fetchAndRefresh(silent) {
-    fetch(API_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then((data) => {
-        rawData = Array.isArray(data) ? data : (data.data || []);
-        writeCache(rawData);
-        buildFilterOptions(rawData);
-        applyFilters();
-        if (!silent) {
-          loadingScreen.classList.add("hidden");
-          loadingScreen.classList.remove("flex");
-        }
-      })
-      .catch(() => {
-        if (!silent) {
-          loadingScreen.classList.add("hidden");
-          loadingScreen.classList.remove("flex");
-          errorState.classList.remove("hidden");
-          errorState.classList.add("flex");
-        }
-        // 背景更新失敗時（silent）維持顯示既有快取資料，不打擾使用者
-      });
+  async function fetchAndRefresh(silent) {
+  try {
+    // =========================
+    // 1. 取得目前登入者的 Supabase Session
+    // =========================
+
+    const {
+      data: { session },
+      error: sessionError
+    } = await supabaseClient.auth.getSession();
+
+    if (sessionError || !session) {
+      throw new Error("尚未登入");
+    }
+
+    // =========================
+    // 2. 把 Access Token 交給 Vercel API
+    // =========================
+
+    const response = await fetch("/api/experiences", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`
+      }
+    });
+
+    // =========================
+    // 3. 檢查後端回應
+    // =========================
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "HTTP " + response.status);
+    }
+
+    // =========================
+    // 4. 取得資料
+    // =========================
+
+    const data = await response.json();
+
+    rawData = Array.isArray(data) ? data : (data.data || []);
+
+    // =========================
+    // 5. 儲存快取、更新畫面
+    // =========================
+
+    writeCache(rawData);
+    buildFilterOptions(rawData);
+    applyFilters();
+
+    if (!silent) {
+      loadingScreen.classList.add("hidden");
+      loadingScreen.classList.remove("flex");
+    }
+
+  } catch (error) {
+    console.error("資料載入失敗：", error);
+
+    if (!silent) {
+      loadingScreen.classList.add("hidden");
+      loadingScreen.classList.remove("flex");
+      errorState.classList.remove("hidden");
+      errorState.classList.add("flex");
+    }
+
+    // 背景更新失敗時（silent）
+    // 維持目前已經顯示的快取資料，不打擾使用者
   }
+}
   retryBtn.addEventListener("click", loadData);
 
   // ---------- 篩選選單 ----------
