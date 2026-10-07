@@ -7,6 +7,8 @@
 
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <!-- Google Fonts：Noto Serif TC 作標題、Noto Sans TC 作內文 -->
@@ -216,14 +218,22 @@
 (function () {
   "use strict";
 
-const SUPABASE_URL = "https://joelbuusbwjlfsokxeoq.supabase.co";
+  // =========================
+  // Supabase
+  // =========================
 
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TL8UdNqw1MOPt-G2yJmDEA_IyH5Gz-c";
+  const SUPABASE_URL = "https://joelbuusbwjlfsokxeoq.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TL8UdNqw1MOPt-G2yJmDEA_IyH5Gz-c";
+
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  // 原本的 API_URL 暫時保留
+  const API_URL = "https://script.google.com/macros/s/https://htsh-project-new.vercel.app/exec";
+  
   // ---- 欄位鍵值（完全對應資料來源） ----
   const K = {
     channel: "入學管道",
