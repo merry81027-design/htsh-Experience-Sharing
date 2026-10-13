@@ -89,45 +89,35 @@
 <body class="min-h-screen bg-bg text-ink">
 
   <!-- ============ 登入畫面 ============ -->
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-bg px-4">
+    <div class="w-full max-w-md px-2">
+      <div class="bg-white rounded-3xl border border-border shadow-lg p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-soft flex items-center justify-center">
+          <i class="fa-solid fa-graduation-cap text-2xl text-primary-dark"></i>
+        </div>
 
-     <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-50">
-  <div class="w-full max-w-md px-6">
-    <div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <h1 class="text-2xl font-bold text-ink mb-2">新店高中</h1>
+        <h2 class="text-lg font-semibold text-ink mb-3">歷屆升學經驗分享</h2>
+        <p class="text-sm text-inksoft leading-relaxed mb-7">
+          僅限本校學生使用學校 Google 帳號登入
+        </p>
 
-      <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-blue-50 flex items-center justify-center">
-        <i class="fa-solid fa-graduation-cap text-2xl text-blue-600"></i>
+        <button
+          id="googleLoginBtn"
+          type="button"
+          class="w-full flex items-center justify-center gap-3 rounded-xl bg-white border border-primary/40 px-5 py-3.5 font-semibold text-primary-dark hover:bg-primary-soft transition shadow-sm disabled:opacity-60 disabled:cursor-wait"
+        >
+          <i class="fa-brands fa-google text-inksoft"></i>
+          使用學校 Google 帳號登入
+        </button>
+
+        <p id="loginError" class="hidden mt-4 text-sm text-red-600"></p>
+        <p class="mt-6 text-xs text-inksoft/80">
+          僅供本校學生升學備審使用，請勿外流
+        </p>
       </div>
-
-      <h1 class="text-2xl font-bold text-slate-800 mb-2">
-        新店高中
-      </h1>
-
-      <h2 class="text-lg font-semibold text-slate-700 mb-3">
-        歷屆升學經驗分享
-      </h2>
-
-      <p class="text-sm text-slate-500 leading-relaxed mb-7">
-        僅限本校學生使用學校 Google 帳號登入
-      </p>
-
-      <button
-        id="googleLoginBtn"
-        type="button"
-        class="w-full flex items-center justify-center gap-3 rounded-xl bg-white border border-slate-300 px-5 py-3.5 font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
-      >
-        <i class="fa-brands fa-google text-red-500"></i>
-        使用學校 Google 帳號登入
-      </button>
-
-      <p id="loginError" class="hidden mt-4 text-sm text-red-600"></p>
-
-      <p class="mt-6 text-xs text-slate-400">
-        僅供本校學生升學備審使用，請勿外流
-      </p>
-
     </div>
   </div>
-</div>
 
   <!-- ============ 主畫面 ============ -->
   <div id="mainScreen" class="hidden min-h-screen">
@@ -139,11 +129,16 @@
           <div class="w-9 h-9 rounded-xl bg-primary-soft flex items-center justify-center shrink-0">
             <i class="fa-solid fa-graduation-cap text-primary-dark text-sm"></i>
           </div>
-          <div>
+          <div class="min-w-0">
             <h1 class="text-base font-semibold leading-tight">歷屆升學經驗分享</h1>
             <p class="text-xs text-inksoft leading-tight">學長姐的路，給你參考</p>
           </div>
+          <button id="refreshDataBtn" type="button" title="重新取得最新表單資料" aria-label="更新資料"
+            class="ml-auto inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-primary-dark hover:bg-primary-soft transition disabled:opacity-60 disabled:cursor-wait">
+            <i class="fa-solid fa-rotate"></i><span>更新資料</span>
+          </button>
         </div>
+        <p id="dataStatus" class="text-[11px] text-inksoft -mt-2 mb-3 px-1" aria-live="polite">登入後自動同步最新資料</p>
 
         <!-- 搜尋框 -->
         <div class="relative mb-3">
@@ -268,7 +263,6 @@
   // 繁星類群（固定選項，供繁星推薦專屬篩選使用）
   const STAR_TYPES = [
     "第一類學群", "第二類學群", "第三類學群", "第四類學群",
-    "第五類學群", "第六類學群", "第七類學群", "第八類學群",
   ];
 
   // 校排區間（固定選項，value 用於篩選判斷，label 用於畫面顯示）
@@ -299,6 +293,9 @@
   const filterStarType = $("filterStarType");
   const filterRankRange = $("filterRankRange");
   const retryBtn = $("retryBtn");
+  const refreshDataBtn = $("refreshDataBtn");
+  const dataStatus = $("dataStatus");
+  let appEntered = false;
 
   // ---------- 工具 ----------
   function escapeHtml(str) {
@@ -348,8 +345,11 @@ googleLoginBtn.addEventListener("click", async () => {
 // ==================== 進入網站 ====================
 
 function enterApp() {
-  loginScreen.classList.add("fade-out");
+  // getSession() 與 INITIAL_SESSION 事件可能同時回報登入狀態，避免重複發出資料請求
+  if (appEntered) return;
+  appEntered = true;
 
+  loginScreen.classList.add("fade-out");
   setTimeout(() => {
     loginScreen.classList.add("hidden");
   }, 350);
@@ -418,13 +418,12 @@ checkAuth();
     const cached = readCache();
 
     if (cached) {
-      // 有快取：直接顯示，不顯示 Loading 畫面，背景再悄悄抓最新資料
+      // 先顯示上次資料以加快畫面，再強制向 API 取得最新版本
       rawData = cached;
       buildFilterOptions(rawData);
       renderList(rawData);
       fetchAndRefresh(true);
     } else {
-      // 沒有快取（第一次使用）：維持原本完整的 Loading 流程
       loadingScreen.classList.remove("hidden");
       loadingScreen.classList.add("flex");
       errorState.classList.add("hidden");
@@ -434,85 +433,104 @@ checkAuth();
   }
 
   async function fetchAndRefresh(silent) {
-  try {
-    // =========================
-    // 1. 取得目前登入者的 Supabase Session
-    // =========================
+    if (dataStatus) dataStatus.textContent = "正在同步最新表單資料…";
 
-    const {
-      data: { session },
-      error: sessionError
-    } = await supabaseClient.auth.getSession();
+    try {
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabaseClient.auth.getSession();
 
-    if (sessionError || !session) {
-      throw new Error("尚未登入");
-    }
-
-    // =========================
-    // 2. 把 Access Token 交給 Vercel API
-    // =========================
-
-    const response = await fetch("/api/experiences", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
+      if (sessionError || !session) {
+        throw new Error("尚未登入，請重新登入後再試");
       }
-    });
 
-    // =========================
-    // 3. 檢查後端回應
-    // =========================
+      // 加上時間戳並停用瀏覽器快取，避免一直讀到舊的 API 回應
+      const response = await fetch(`/api/experiences?refresh=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Cache-Control": "no-cache"
+        }
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "HTTP " + response.status);
-    }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "HTTP " + response.status);
+      }
 
-    // =========================
-    // 4. 取得資料
-    // =========================
+      const data = await response.json();
+      const latestData = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : null);
+      if (!latestData) throw new Error("資料來源格式不符，請檢查 Apps Script 回傳內容");
 
-    const data = await response.json();
+      rawData = latestData;
+      writeCache(rawData);
+      buildFilterOptions(rawData);
+      updateChannelDependentFilters();
+      applyFilters();
 
-    rawData = Array.isArray(data) ? data : (data.data || []);
+      const updatedAt = new Date().toLocaleTimeString("zh-TW", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      if (dataStatus) dataStatus.textContent = `資料已同步・${updatedAt}`;
 
-    // =========================
-    // 5. 儲存快取、更新畫面
-    // =========================
-
-    writeCache(rawData);
-    buildFilterOptions(rawData);
-    applyFilters();
-
-    if (!silent) {
       loadingScreen.classList.add("hidden");
       loadingScreen.classList.remove("flex");
+      errorState.classList.add("hidden");
+      errorState.classList.remove("flex");
+      return true;
+    } catch (error) {
+      console.error("資料載入失敗：", error);
+      if (dataStatus) {
+        dataStatus.textContent = rawData.length
+          ? "更新失敗，畫面暫時顯示上次載入的資料；請稍後重試"
+          : "資料更新失敗，請按重新載入再試一次";
+      }
+
+      if (!silent) {
+        loadingScreen.classList.add("hidden");
+        loadingScreen.classList.remove("flex");
+        errorState.classList.remove("hidden");
+        errorState.classList.add("flex");
+      }
+      return false;
     }
+  }
 
-  } catch (error) {
-    console.error("資料載入失敗：", error);
+  retryBtn.addEventListener("click", () => {
+    errorState.classList.add("hidden");
+    errorState.classList.remove("flex");
+    loadData();
+  });
 
-    if (!silent) {
-      loadingScreen.classList.add("hidden");
-      loadingScreen.classList.remove("flex");
+  refreshDataBtn.addEventListener("click", async () => {
+    if (refreshDataBtn.disabled) return;
+    const originalButton = '<i class="fa-solid fa-rotate"></i><span>更新資料</span>';
+    refreshDataBtn.disabled = true;
+    refreshDataBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>更新中</span>';
+    const ok = await fetchAndRefresh(true);
+    refreshDataBtn.disabled = false;
+    refreshDataBtn.innerHTML = originalButton;
+    if (!ok && !rawData.length) {
       errorState.classList.remove("hidden");
       errorState.classList.add("flex");
     }
-
-    // 背景更新失敗時（silent）
-    // 維持目前已經顯示的快取資料，不打擾使用者
-  }
-}
-  retryBtn.addEventListener("click", loadData);
+  });
 
   // ---------- 篩選選單 ----------
   function buildFilterOptions(data) {
+    const selectedChannel = filterChannel.value;
     const channels = new Set();
     data.forEach((item) => {
       const c = val(item, K.channel);
       if (c) channels.add(c);
     });
-    fillSelect(filterChannel, Array.from(channels).sort(), "全部入學管道");
+    const channelList = Array.from(channels).sort();
+    fillSelect(filterChannel, channelList, "全部入學管道");
+    if (channelList.includes(selectedChannel)) filterChannel.value = selectedChannel;
   }
 
   function populateGroupFilter() {
