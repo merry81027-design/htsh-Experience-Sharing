@@ -485,9 +485,10 @@ checkAuth();
     } catch (error) {
       console.error("資料載入失敗：", error);
       if (dataStatus) {
+        const reason = error && error.message ? error.message : "未知錯誤";
         dataStatus.textContent = rawData.length
-          ? "更新失敗，畫面暫時顯示上次載入的資料；請稍後重試"
-          : "資料更新失敗，請按重新載入再試一次";
+          ? `更新失敗（${reason}），畫面暫時顯示上次載入的資料；請稍後重試`
+          : `資料更新失敗（${reason}），請按重新載入再試一次`;
       }
 
       if (!silent) {
